@@ -734,27 +734,11 @@ EndIf
 
       RunWait($arch&"\VBoxSVC.exe /unregserver", @ScriptDir, @SW_HIDE)
       RunWait(@SystemDir&"\regsvr32.exe /S /U "&$arch&"\VBoxC.dll", @ScriptDir, @SW_HIDE)
-		If FileExists(@ScriptDir&"\app32\") AND FileExists(@ScriptDir&"\app64\") Then
-			If @OSArch = "x64" Then
-			$append_arch = "64"
-			$append_wow = ""
-			Else
-			$append_arch = ""
-			$append_wow = "\WOW6432Node"
-			EndIf
-		Else
-			If FileExists(@ScriptDir&"\app32\") AND NOT FileExists(@ScriptDir&"\app64\") Then
-			$append_arch = ""
-			$append_wow = "\WOW6432Node"
-			EndIf
-			If NOT FileExists(@ScriptDir&"\app32\") AND FileExists(@ScriptDir&"\app64\") Then
-			$append_arch = "64"
-			$append_wow = ""
-			EndIf
-		EndIf
+
 	While 1
-	Local $VBoxProxyStub = RegRead("HKLM"&$append_arch&"\SOFTWARE\Classes"&$append_wow&"\CLSID\{0BB3B78C-1807-4249-5BA5-EA42D66AF0BF}\InProcServer32", "")
+	Local $VBoxProxyStub = RegRead("HKLM\SOFTWARE\Classes\CLSID\{0BB3B78C-1807-4249-5BA5-EA42D66AF0BF}\InProcServer32", "")
     If StringRegExp($VBoxProxyStub, "VBoxProxyStub") Then
+		RunWait($arch&"\VBoxSDS.exe /UnregService", @ScriptDir, @SW_SHOW)
 		RunWait(@SystemDir&"\regsvr32.exe /S /U "&$arch&"\VBoxProxyStub.dll", @ScriptDir, @SW_HIDE)
 	EndIf
 	If NOT $VBoxProxyStub Then ExitLoop
