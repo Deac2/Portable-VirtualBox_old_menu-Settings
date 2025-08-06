@@ -711,7 +711,7 @@ EndIf
           Local $StartVM  = IniRead($var1, "startvm", "key", "NotFound")
 		  If FileExists($UserHome&"\Machines\"&$StartVM) Then
 			Run("cmd /c set VBOX_USER_HOME="&$UserHome&"&"&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
-			RunWait("cmd /C set VBOX_USER_HOME="&$UserHome&"&"&$arch&"\VBoxManage.exe startvm """& $StartVM &"""" , @ScriptDir, @SW_HIDE)
+			RunWait("cmd /C set VBOX_USER_HOME="&$UserHome&"&"&$arch&"\VBoxManage.exe startvm """&$StartVM&"""", @ScriptDir, @SW_HIDE)
 		  Else
 			IniWrite($var1, "startvm", "key", "")
 			RunWait("cmd /c set VBOX_USER_HOME="&$UserHome&"&"&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
