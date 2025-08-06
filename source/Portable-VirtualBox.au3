@@ -724,8 +724,6 @@ EndIf
         ProcessWaitClose("VBoxManage.exe")
       EndIf
 
-      ProcessWaitClose("VirtualBoxVM.exe")
-
       SplashTextOn("Portable-VirtualBox", IniRead($Dir_Lang & $lng &".ini", "messages", "07", "NotFound"), 220, 40, -1, -1, 1, "arial", 12)
 
       ExitScript()
