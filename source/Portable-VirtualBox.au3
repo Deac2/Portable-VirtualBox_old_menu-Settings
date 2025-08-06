@@ -695,13 +695,13 @@ EndIf
 			Next
           Endif
 		  If IniRead($var1, "userhome", "key", "NotFound") = $UserHome Then
-			Run("cmd /c set VBOX_USER_HOME="&$UserHome&"& "&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
-			RunWait("cmd /c set VBOX_USER_HOME="&$UserHome&"& "&$arch&"\VBoxManage.exe startvm """& $StartVM &"""" , @ScriptDir, @SW_HIDE)
+			Run("cmd /c set VBOX_USER_HOME="&$UserHome&"&"&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
+			RunWait("cmd /c set VBOX_USER_HOME="&$UserHome&"&"&$arch&"\VBoxManage.exe startvm """& $StartVM &"""" , @ScriptDir, @SW_HIDE)
           Else
-            RunWait("cmd /c set VBOX_USER_HOME="&$UserHome&"& "&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
+            RunWait("cmd /c set VBOX_USER_HOME="&$UserHome&"&"&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
           EndIf
         Else
-          RunWait("cmd /c set VBOX_USER_HOME="&$UserHome&"& "&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
+			RunWait("cmd /c set VBOX_USER_HOME="&$DefaultUserHome&"&"&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
         EndIf
 
         ProcessWaitClose("VirtualBox.exe")
@@ -709,14 +709,15 @@ EndIf
       Else
         If FileExists($UserHome) Then
           Local $StartVM  = IniRead($var1, "startvm", "key", "NotFound")
-          If IniRead($var1, "startvm", "key", "NotFound") = true Then
-			Run("cmd /c set VBOX_USER_HOME="&$UserHome&"& "&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
-            RunWait("cmd /C set VBOX_USER_HOME="&$UserHome&"& "&$arch&"\VBoxManage.exe startvm """& $StartVM &"""" , @ScriptDir, @SW_HIDE)
-          Else
-            RunWait("cmd /c set VBOX_USER_HOME="&$UserHome&"& "&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
+		  If FileExists($UserHome&"\Machines\"&$StartVM) Then
+			Run("cmd /c set VBOX_USER_HOME="&$UserHome&"&"&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
+			RunWait("cmd /C set VBOX_USER_HOME="&$UserHome&"&"&$arch&"\VBoxManage.exe startvm """& $StartVM &"""" , @ScriptDir, @SW_HIDE)
+		  Else
+			IniWrite($var1, "startvm", "key", "")
+			RunWait("cmd /c set VBOX_USER_HOME="&$UserHome&"&"&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
           EndIf
         Else
-          RunWait("cmd /c set VBOX_USER_HOME="&$UserHome&"& "&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
+			RunWait("cmd /c set VBOX_USER_HOME="&$DefaultUserHome&"&"&$arch&"\VirtualBox.exe", @ScriptDir, @SW_HIDE)
         EndIf
 
         ProcessWaitClose("VirtualBox.exe")
@@ -1026,13 +1027,12 @@ Func Settings()
     GUICtrlCreateLabel(IniRead($Dir_Lang & $lng &".ini", "startvm-settings", "02", "NotFound"), 16, 40, 546, 105)
 
     $Radio3 = GUICtrlCreateRadio("Radio3", 20, 154, 14, 14)
-    If IniRead($var1, "startvm", "key", "NotFound") = false Then
-      GUICtrlSetState(-1, $GUI_CHECKED)
-    EndIf
 
     $Radio4 = GUICtrlCreateRadio("Radio4", 20, 186, 14, 14)
-    If IniRead($var1, "startvm", "key", "NotFound") = true Then
-      GUICtrlSetState(-1, $GUI_CHECKED)
+    If IniRead($var1, "startvm", "key", "NotFound") = false Then
+      GUICtrlSetState($Radio3, $GUI_CHECKED)
+	  Else
+	  GUICtrlSetState($Radio4, $GUI_CHECKED)
     EndIf
 
     GUICtrlCreateLabel(IniRead($Dir_Lang & $lng &".ini", "startvm-settings", "03", "NotFound"), 36, 153, 524, 21)
@@ -1318,7 +1318,7 @@ Func SRCStartVM()
     If StringRegExp($line, "VirtualBox") and StringRegExp($line, "Machine") and StringRegExp($line, "HardDisks") and StringRegExp($line, "Hardware") Then
 		$values2 = _StringBetween($line, '<HardDisks>', '</HardDisks>')
 		If $values2 <> 0 Then
-		$values3 = _StringBetween($line, 'uuid="', '"')
+		$values3 = _StringBetween($line, 'name="', '"')
 		EndIf
     EndIf
 	If $values3 <> 0 Then
