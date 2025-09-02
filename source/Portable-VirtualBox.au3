@@ -84,34 +84,7 @@ If @OSArch = "x64" AND NOT FileExists(@ScriptDir&"\data\tools\devcon_x64.exe") T
 #ce
 
 	Global $UserHome = IniRead($var1, "userhome", "key", "NotFound")
-	If FileExists(StringLeft($UserHome, 2)) Then DirCreate($UserHome)
-		If FileExists($UserHome) AND StringInStr(FileGetAttrib($UserHome), "D") AND NOT StringInStr(FileGetAttrib($UserHome), "R") Then
-			If NOT StringRegExp(StringLeft($UserHome, 3),":\\") Then
-			$UserHome = StringRegExpReplace($UserHome, "\h*[\/\\]+\h*", "\\")
-			$UserHome = StringRegExpReplace($UserHome, ":", ":\\")
-			$UserHome = StringRegExpReplace($UserHome, "\\+$", "")
-			IniWrite($var1, "userhome", "key", $UserHome)
-			Else
-			$UserHome = StringRegExpReplace($UserHome, "\h*[\/\\]+\h*", "\\")
-			$UserHome = StringRegExpReplace($UserHome, "\\+$", "")
-			IniWrite($var1, "userhome", "key", $UserHome)
-			EndIf
-		Else
-			If FileExists(StringRegExp(StringLeft($UserHome, 2),":")) Then
-			$UserHome = StringRegExpReplace($UserHome, "\h*[\/\\]+\h*", "\\")
-			$UserHome = StringRegExpReplace($UserHome, "\\+$", "")
-			IniWrite($var1, "userhome", "key", $DefaultUserHome)
-			Else
-			$UserHome = StringRegExpReplace($UserHome, "\h*[\/\\]+\h*", "\\")
-			$UserHome = StringRegExpReplace($UserHome, "\\+$", "")
-			IniWrite($var1, "userhome", "key", $DefaultUserHome)
-			EndIf
-			If NOT FileExists($UserHome) Then
-			$UserHome = StringRegExpReplace($UserHome, "\h*[\/\\]+\h*", "\\")
-			$UserHome = StringRegExpReplace($UserHome, "\\+$", "")
-			IniWrite($var1, "userhome", "key", $DefaultUserHome)
-			EndIf
-	EndIf
+	ValidateAndSavePath("userhome", "key", $UserHome)
 
 If IniRead($var1, "lang", "key", "NotFound") = 0 Then
   Global $cl = 1, $StartLng
@@ -855,6 +828,37 @@ EndIf
 Break(1)
 Exit
 
+Func ValidateAndSavePath($iniSection, $iniKey, $Path)
+    If FileExists(StringLeft($Path, 2)) Then DirCreate($Path)
+    If FileExists($Path) And StringInStr(FileGetAttrib($Path), "D") And Not StringInStr(FileGetAttrib($Path), "R") Then
+        If Not StringRegExp(StringLeft($Path, 3), ":\\") Then
+            $Path = StringRegExpReplace($Path, "\h*[\/\\]+\h*", "\\")
+            $Path = StringRegExpReplace($Path, ":", ":\\")
+            $Path = StringRegExpReplace($Path, "\\+$", "")
+            IniWrite($var1, $iniSection, $iniKey, $Path)
+        Else
+            $Path = StringRegExpReplace($Path, "\h*[\/\\]+\h*", "\\")
+            $Path = StringRegExpReplace($Path, "\\+$", "")
+            IniWrite($var1, $iniSection, $iniKey, $Path)
+        EndIf
+    Else
+        If FileExists(StringRegExp(StringLeft($Path, 2), ":")) Then
+            $Path = StringRegExpReplace($Path, "\h*[\/\\]+\h*", "\\")
+            $Path = StringRegExpReplace($Path, "\\+$", "")
+            IniWrite($var1, $iniSection, $iniKey, $DefaultUserHome)
+        Else
+            $Path = StringRegExpReplace($Path, "\h*[\/\\]+\h*", "\\")
+            $Path = StringRegExpReplace($Path, "\\+$", "")
+            IniWrite($var1, $iniSection, $iniKey, $DefaultUserHome)
+        EndIf
+        If Not FileExists($Path) Then
+            $Path = StringRegExpReplace($Path, "\h*[\/\\]+\h*", "\\")
+            $Path = StringRegExpReplace($Path, "\\+$", "")
+            IniWrite($var1, $iniSection, $iniKey, $DefaultUserHome)
+        EndIf
+    EndIf
+EndFunc
+
 Func ShowWindows_VM()
   Opt("WinTitleMatchMode", 2)
   WinSetState("] - "&$VMTitle&"", "", BitAND(@SW_SHOW, @SW_RESTORE))
@@ -1284,7 +1288,8 @@ Func OKUserHome()
     MsgBox(0, IniRead($Dir_Lang & $lng &".ini", "messages", "04", "NotFound"), IniRead($Dir_Lang & $lng &".ini", "messages", "05", "NotFound"))
   Else
     If FileExists(GUICtrlRead($HomeRoot)) Then
-      IniWrite(@ScriptDir&"\data\settings\settings.ini", "userhome", "key", GUICtrlRead($HomeRoot))
+      ValidateAndSavePath("userhome", "key", GUICtrlRead($HomeRoot))
+      ;IniWrite(@ScriptDir&"\data\settings\settings.ini", "userhome", "key", GUICtrlRead($HomeRoot))
       MsgBox(0, IniRead($Dir_Lang & $lng &".ini", "messages", "04", "NotFound"), IniRead($Dir_Lang & $lng &".ini", "messages", "05", "NotFound"))
     Else
 	  MsgBox(0, IniRead($Dir_Lang & $lng &".ini", "messages", "01", "NotFound"), IniRead($Dir_Lang & $lng &".ini", "okuserhome", "01", "NotFound"))
