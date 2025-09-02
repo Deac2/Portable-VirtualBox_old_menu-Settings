@@ -828,6 +828,26 @@ EndIf
 Break(1)
 Exit
 
+Func ShowWindows_VM()
+  Opt("WinTitleMatchMode", 2)
+  WinSetState("] - "&$VMTitle&"", "", BitAND(@SW_SHOW, @SW_RESTORE))
+EndFunc
+
+Func HideWindows_VM()
+  Opt("WinTitleMatchMode", 2)
+  WinSetState("] - "&$VMTitle&"", "", @SW_HIDE)
+EndFunc
+
+Func ShowWindows()
+  Opt("WinTitleMatchMode", 3)
+  WinSetState(""&$VMTitle&" "&$Manager&"", "", BitAND(@SW_SHOW, @SW_RESTORE))
+EndFunc
+
+Func HideWindows()
+  Opt("WinTitleMatchMode", 3)
+  WinSetState(""&$VMTitle&" "&$Manager&"", "", @SW_HIDE)
+EndFunc
+
 Func ValidateAndSavePath($iniSection, $iniKey, $Path)
     If FileExists(StringLeft($Path, 2)) Then DirCreate($Path)
     If FileExists($Path) And StringInStr(FileGetAttrib($Path), "D") And Not StringInStr(FileGetAttrib($Path), "R") Then
@@ -857,26 +877,6 @@ Func ValidateAndSavePath($iniSection, $iniKey, $Path)
             IniWrite($var1, $iniSection, $iniKey, $DefaultUserHome)
         EndIf
     EndIf
-EndFunc
-
-Func ShowWindows_VM()
-  Opt("WinTitleMatchMode", 2)
-  WinSetState("] - "&$VMTitle&"", "", BitAND(@SW_SHOW, @SW_RESTORE))
-EndFunc
-
-Func HideWindows_VM()
-  Opt("WinTitleMatchMode", 2)
-  WinSetState("] - "&$VMTitle&"", "", @SW_HIDE)
-EndFunc
-
-Func ShowWindows()
-  Opt("WinTitleMatchMode", 3)
-  WinSetState(""&$VMTitle&" "&$Manager&"", "", BitAND(@SW_SHOW, @SW_RESTORE))
-EndFunc
-
-Func HideWindows()
-  Opt("WinTitleMatchMode", 3)
-  WinSetState(""&$VMTitle&" "&$Manager&"", "", @SW_HIDE)
 EndFunc
 
 Func EmptyIniWrite($filename, $section, $key, $value, $encoding = 256)
