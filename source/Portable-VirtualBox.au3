@@ -1289,7 +1289,6 @@ Func OKUserHome()
   Else
     If FileExists(GUICtrlRead($HomeRoot)) Then
       ValidateAndSavePath("userhome", "key", GUICtrlRead($HomeRoot))
-      ;IniWrite(@ScriptDir&"\data\settings\settings.ini", "userhome", "key", GUICtrlRead($HomeRoot))
       MsgBox(0, IniRead($Dir_Lang & $lng &".ini", "messages", "04", "NotFound"), IniRead($Dir_Lang & $lng &".ini", "messages", "05", "NotFound"))
     Else
 	  MsgBox(0, IniRead($Dir_Lang & $lng &".ini", "messages", "01", "NotFound"), IniRead($Dir_Lang & $lng &".ini", "okuserhome", "01", "NotFound"))
