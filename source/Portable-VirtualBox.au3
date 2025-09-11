@@ -945,7 +945,6 @@ Func _FileListToArray($sFilePath, $sFilter = "*", $iFlag = $FLTA_FILESFOLDERS, $
 EndFunc
 
 Func _StringBetween($s_String, $s_Start, $s_End, $v_Case = -1)
-
 	; Set case type
 	Local $s_case = ""
 	If $v_Case = Default Or $v_Case = -1 Then $s_case = "(?i)"
@@ -1815,5 +1814,4 @@ Func HybridMode()
 		; Does not need to wait since it's a regular version of VirtualBox
 		Exit
 	EndIf
-
 EndFunc
