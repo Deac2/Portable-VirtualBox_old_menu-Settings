@@ -100,7 +100,7 @@ If IniRead($var1, "lang", "key", "NotFound") = 0 Then
   $FileList = _FileListToArray($Dir_Lang, "*", 1)
   Local $sfilelist
   For $i = 1 to $FileList[0]
-  $sfilelist &= StringReplace($FileList[$i], ".ini", "")&"|"
+  $sfilelist &= FirstLetterUpper(StringReplace($FileList[$i], ".ini", "")&"|")
   Next
   $sfilelist = StringTrimRight($sfilelist, 1)
   
@@ -251,20 +251,6 @@ If (FileExists(@ScriptDir&"\app32\virtualbox.exe") OR FileExists(@ScriptDir&"\ap
     EndIf
   EndIf
 
-  Global $Manager = StringSplit(IniRead($Dir_Lang & $lng &".ini", "startvm-settings", "01", "NotFound"), "-")
-  if $Manager[0]>1 then
-	$Manager = $Manager[2]
-	Else
-	$Manager = "Manager"
-  EndIf
-
-    Local $sFileVer = StringRegExpReplace(FileGetVersion(@ScriptDir&"\"&$arch&"\VirtualBox.exe"), "^(\d+\.\d+.\d+)?.*", "$1")
-  If $sFileVer>="7.1.0" Then
-    Global $VMTitle = "Oracle VirtualBox"
-  Else
-    Global $VMTitle = "Oracle VM VirtualBox"
-  EndIf
-
   If FileExists($UserHome&"\VirtualBox.xml-prev") Then
     FileDelete($UserHome&"\VirtualBox.xml-prev")
   EndIf
@@ -330,20 +316,16 @@ If (FileExists(@ScriptDir&"\app32\virtualbox.exe") OR FileExists(@ScriptDir&"\ap
 			$b += 1
 			$values4 = StringReplace($values4, $a[$i], "")
 			if $i>=$b Then
-            $file    = FileOpen(@ScriptDir&"\Portable-VirtualBox.error.txt", 1)
-            FileWrite($file, "List of duplicate machines with the same uuid:" &@LF)
+			_LogDuplicate($a[$x] &@LF&"----------------------------------------"&@LF&"Downloaded: "&$a[$i])
 			EndIf
-            $file    = FileOpen(@ScriptDir&"\Portable-VirtualBox.error.txt", 1)
-			FileWrite($file, $a[$x] &@LF& $a[$i] &@LF&@LF)
 			if $i<=1 Then
-			$file    = FileOpen(@ScriptDir&"\Portable-VirtualBox.error.txt", 1)
-			FileWrite($file, "To eliminate errors, only one of the duplicates was added to VirtualBox.xml"&@LF& $values4 &@LF&@LF)
-			FileClose($file)
+			_LogDuplicate(StringTrimRight($values4, 2))
 			EndIf
 			$x = 0
 			EndIf
 		Next
     Next
+    FileClose($file)
 
       $content = FileRead(FileOpen($UserHome&"\VirtualBox.xml", 128))
       $values6 = _StringBetween($content, "</ExtraData>", "<NetserviceRegistry>")
@@ -809,8 +791,8 @@ EndIf
       RunWait("sc delete VBoxSDS", @ScriptDir, @SW_HIDE)
       SplashOff()
     Else
-      WinSetState(""&$VMTitle&" "&$Manager&"", "", BitAND(@SW_SHOW, @SW_RESTORE))
-      WinSetState("] - "&$VMTitle&"", "", BitAND(@SW_SHOW, @SW_RESTORE))
+      _WinSetState("VirtualBox.exe", BitAND(@SW_SHOW, @SW_RESTORE))
+      _WinSetState("VirtualBoxVM.exe", BitAND(@SW_SHOW, @SW_RESTORE))
     EndIf
   Else
     SplashOff()
@@ -822,23 +804,69 @@ Break(1)
 Exit
 
 Func ShowWindows_VM()
-  Opt("WinTitleMatchMode", 2)
-  WinSetState("] - "&$VMTitle&"", "", BitAND(@SW_SHOW, @SW_RESTORE))
+_WinSetState("VirtualBoxVM.exe", BitAND(@SW_SHOW, @SW_RESTORE))
 EndFunc
 
 Func HideWindows_VM()
-  Opt("WinTitleMatchMode", 2)
-  WinSetState("] - "&$VMTitle&"", "", @SW_HIDE)
+_WinSetState("VirtualBoxVM.exe", @SW_HIDE)
 EndFunc
 
 Func ShowWindows()
-  Opt("WinTitleMatchMode", 3)
-  WinSetState(""&$VMTitle&" "&$Manager&"", "", BitAND(@SW_SHOW, @SW_RESTORE))
+_WinSetState("VirtualBox.exe", BitAND(@SW_SHOW, @SW_RESTORE))
 EndFunc
 
 Func HideWindows()
-  Opt("WinTitleMatchMode", 3)
-  WinSetState(""&$VMTitle&" "&$Manager&"", "", @SW_HIDE)
+_WinSetState("VirtualBox.exe", @SW_HIDE)
+EndFunc
+
+Func _WinSetState($ProcessName, $Command)
+Local $titles = GetWindowTitlesByProcessName($ProcessName)
+If @error Then Return
+For $i = 1 To $titles[0]
+WinSetState(""&$titles[$i]&"", "", $Command)
+Next
+EndFunc
+
+Func GetWindowTitlesByProcessName($ProcessName)
+    Local $pid = 0
+    Local $processList = ProcessList()
+    For $i = 1 To $processList[0][0]
+        If StringLower($processList[$i][0]) = StringLower($ProcessName) Then
+            $pid = $processList[$i][1]
+        EndIf
+    Next
+    If $pid = 0 Then Return SetError(1,0,0)
+
+    Local $winList = WinList()
+    Local $titles[1] = [0]
+
+    For $i = 1 To $winList[0][0]
+        If $winList[$i][0] <> "" Then
+            Local $wPID = WinGetProcess($winList[$i][1])
+            If $wPID = $pid Then
+                Local $title = WinGetTitle($winList[$i][1])
+				If StringInStr($title, "VirtualBox") <> 0 Then
+                    $titles[0] += 1
+                    ReDim $titles[$titles[0] + 1]
+                    $titles[$titles[0]] = $title
+                EndIf
+            EndIf
+        EndIf
+    Next
+    Return $titles
+EndFunc
+
+Func _LogDuplicate($lineDuplicate)
+    Local $filePath = @ScriptDir&"\Portable-VirtualBox.error.txt"
+    Local $hFile = FileOpen($filePath, 1)
+    If $hFile = -1 Then
+        Return
+    EndIf
+    Local $uuid = _StringBetween($lineDuplicate, 'uuid="', '"')
+    FileWrite($hFile, "Duplicate found with UUID: " & $uuid[0] & @LF)
+    FileWrite($hFile, "Duplicate line: " & $lineDuplicate & @LF)
+    FileWrite($hFile, "----------------------------------------" & @LF)
+    FileClose($hFile)
 EndFunc
 
 Func ValidatePath($Path, $DefaultPath)
@@ -958,6 +986,11 @@ Func _StringBetween($s_String, $s_Start, $s_End, $v_Case = -1)
 	If @error Then Return SetError(1, 0, 0)
 	Return $a_ret
 EndFunc   ;==>_StringBetween
+
+Func FirstLetterUpper($sText)
+    If StringLen($sText) = 0 Then Return $sText
+    Return StringUpper(StringLeft($sText, 1)) & StringMid($sText, 2)
+EndFunc
 
 Func Settings()
     If NOT $Settings Then 
@@ -1234,7 +1267,7 @@ Func Settings()
     $FileList = _FileListToArray($Dir_Lang, "*", 1)
     Local $sfilelist
     For $i = 1 to $FileList[0]
-    $sfilelist &= StringReplace($FileList[$i], ".ini", "")&"|"
+    $sfilelist &= FirstLetterUpper(StringReplace($FileList[$i], ".ini", "")&"|")
     Next
     $sfilelist = StringTrimRight($sfilelist, 1)
     $StartLng = GUICtrlCreateCombo("", 238, 182, 100, 0, $CBS_DROPDOWNLIST)
@@ -1552,9 +1585,9 @@ Func ExitScript()
   Opt("WinTitleMatchMode", 2)
   WinClose("VirtualBoxVM", "")
   WinWaitClose("VirtualBoxVM", "")
-  WinClose("] - "&$VMTitle&"")
-  WinWaitClose("] - "&$VMTitle&"")
-  WinClose($VMTitle, "")
+  WinClose("] - Oracle")
+  WinWaitClose("] - Oracle")
+  WinClose("Oracle", "")
   ProcessNameClose("VirtualBox.exe")
   ProcessNameClose("VBoxManage.exe")
   ProcessNameClose("VirtualBoxVM.exe")
