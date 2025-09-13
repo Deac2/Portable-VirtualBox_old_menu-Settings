@@ -828,6 +828,19 @@ Func HideWindows()
 _WinSetState("VirtualBox.exe", @SW_HIDE)
 EndFunc
 
+Func _LogDuplicate($Linetext)
+    Local $filePath = @ScriptDir&"\Portable-VirtualBox.error.txt"
+    Local $hFile = FileOpen($filePath, 1)
+    If $hFile = -1 Then
+        Return
+    EndIf
+    Local $uuid = _StringBetween($Linetext, 'uuid="', '"')
+    FileWrite($hFile, "Duplicate found with UUID: " & $uuid[0] & @LF)
+    FileWrite($hFile, "Duplicate line: " & $Linetext & @LF)
+    FileWrite($hFile, "----------------------------------------" & @LF)
+    FileClose($hFile)
+EndFunc
+
 Func _WinSetState($ProcessName, $Command)
 Local $titles = GetWindowTitle($ProcessName)
 If @error Then Return
@@ -863,19 +876,6 @@ Func GetWindowTitle($ProcessName)
         EndIf
     Next
     Return $titles
-EndFunc
-
-Func _LogDuplicate($lineDuplicate)
-    Local $filePath = @ScriptDir&"\Portable-VirtualBox.error.txt"
-    Local $hFile = FileOpen($filePath, 1)
-    If $hFile = -1 Then
-        Return
-    EndIf
-    Local $uuid = _StringBetween($lineDuplicate, 'uuid="', '"')
-    FileWrite($hFile, "Duplicate found with UUID: " & $uuid[0] & @LF)
-    FileWrite($hFile, "Duplicate line: " & $lineDuplicate & @LF)
-    FileWrite($hFile, "----------------------------------------" & @LF)
-    FileClose($hFile)
 EndFunc
 
 Func ValidatePath($Path, $DefaultPath)
@@ -1604,8 +1604,8 @@ Func ExitScript()
   ProcessNameClose("VBoxSDS.exe")
 EndFunc
 
-Func ProcessNameClose($Process)
-	Local $ListArray = ProcessList($Process)
+Func ProcessNameClose($ProcessName)
+	Local $ListArray = ProcessList($ProcessName)
 	For $i = 0 To $ListArray[0][0]
 	If ProcessExists($ListArray[$i][1]) Then
 	ProcessClose($ListArray[$i][1])
