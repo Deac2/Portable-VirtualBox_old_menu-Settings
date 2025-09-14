@@ -1011,7 +1011,7 @@ Func Settings()
     Global $Input1, $Input2, $Input3, $Input4, $Input5, $Input6
     Global $HomeRoot, $VMStart, $StartLng
     
-    $Settings = GUICreate(IniRead($Dir_Lang & $lng &".ini", "settings-label", "01", "NotFound"), 580, 318, 193, 125, $WS_SYSMENU)
+    $Settings = GUICreate(IniRead($Dir_Lang & $lng &".ini", "settings-label", "01", "NotFound"), 580, 318, -1, -1, $WS_SYSMENU)
 	GUISetOnEvent($GUI_EVENT_CLOSE, "ExitGUI")
     GUISetFont(9, 400, 0, "Arial")
     GUISetBkColor(0xFFFFFF)
