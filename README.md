@@ -1,6 +1,5 @@
 <img width="576" height="316" alt="image" src="https://github.com/user-attachments/assets/aefaecae-006f-4c3f-b371-4a76005473de"/><br>
 Old version of settings.<br>
-If something doesn't work, open issues in the thread you downloaded from (it's better to create in my repositories).<br>
 
 22.10.2024 If you have an old language folder, Delete the data\language folder as the languages ​​have been partially changed.<br>
 Disable message center notifications and screen capture messages VirtualBoxVM.exe default settings directory:<br>
