@@ -325,10 +325,9 @@ If (FileExists(@ScriptDir&"\app32\virtualbox.exe") OR FileExists(@ScriptDir&"\ap
 			$b += 1
 			$values4 = StringReplace($values4, $a[$i], "")
 			if $i>=$b Then
-			_LogDuplicate($a[$x] &@LF&"----------------------------------------"&@LF&"Downloaded: "&$a[$i])
-			EndIf
-			if $i<=1 Then
-			_LogDuplicate(StringTrimRight($values4, 2))
+			_LogDuplicate($a[$x])
+			Else
+			_LogDuplicate($a[$x])
 			EndIf
 			$x = 0
 			EndIf
