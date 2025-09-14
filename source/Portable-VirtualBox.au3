@@ -1,10 +1,10 @@
 ; Language       : multilanguage
 ; Author         : Michael Meyer (michaelm_007) et al.
-; Modified       : Deac2 Copyright (c) 2024
 ; e-Mail         : email.address@gmx.de
 ; License        : http://creativecommons.org/licenses/by-nc-sa/3.0/
 ; Version        : 6.4.9.1
 ; Download       : http://www.vbox.me
+; Modified       : Deac2 Copyright (c) 2024
 ; Support        : https://github.com/Deac2
 
 If NOT @Compiled Then Opt("TrayIconDebug", 1)
@@ -325,9 +325,10 @@ If (FileExists(@ScriptDir&"\app32\virtualbox.exe") OR FileExists(@ScriptDir&"\ap
 			$b += 1
 			$values4 = StringReplace($values4, $a[$i], "")
 			if $i>=$b Then
-			_LogDuplicate($a[$x])
-			Else
-			_LogDuplicate($a[$x])
+			_LogDuplicate($a[$x] &@LF&"----------------------------------------"&@LF&"Downloaded: "&$a[$i])
+			EndIf
+			if $i<=1 Then
+			_LogDuplicate(StringTrimRight($values4, 2))
 			EndIf
 			$x = 0
 			EndIf
