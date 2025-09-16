@@ -1764,7 +1764,7 @@ Func DownloadFile()
     Local $retryCount2 = 0
     Local $info2 = InetGet($url2, $save2, 8, 1)
     Do
-        Sleep(150)
+        Sleep(50)
         Local $bytes = InetGetInfo($info2, 0)
         Local $total_bytes = InetGetInfo($info2, 1)
         Local $status = InetGetInfo($info2, 3)
