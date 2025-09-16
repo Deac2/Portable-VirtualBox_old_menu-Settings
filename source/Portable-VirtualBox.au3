@@ -1790,41 +1790,6 @@ Func DownloadFile()
 	GUICtrlSetState($Button200, $GUI_ENABLE)
 EndFunc
 
-Func DownloadFile22()
-  GUICtrlSetState($Button100, $GUI_DISABLE)
-  GUICtrlSetState($Button200, $GUI_DISABLE)
-  Local $download1 = InetGet(IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key1", "NotFound"), $pwd&"\VirtualBox.exe", 8, 1)
-  Local $download2 = IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key1", "NotFound")
-  Do
-    Sleep(250)
-    Local $bytes = 0
-    $bytes = InetGetInfo($download1, 0)
-	$total_bytes = InetGetInfo($download1, 1)
-    GUICtrlSetData($Input200, IniRead($Dir_Lang & $lng &".ini", "status", "01", "NotFound") &" "& $download2 & @LF & DisplayDownloadStatus($bytes,$total_bytes) )
-	;GUICtrlSetData($ProgressBar1,Round(100*$bytes/$total_bytes)) ; <<<TODO: Ticket 3509714
-  Until InetGetInfo($download1, 2)
-  InetClose($download1)
-  Local $download3 = InetGet(IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key2", "NotFound"), $pwd&"\Extension", 8, 1)
-  Local $download4 = IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key2", "NotFound")
-  $total_bytes = InetGetInfo($download3, 1)
-  Do
-    Sleep(250)
-    Local $bytes = 0
-    $bytes = InetGetInfo($download3, 0)
-	$total_bytes = InetGetInfo($download3, 1)
-    GUICtrlSetData($Input200, $download4 & @LF & DisplayDownloadStatus($bytes,$total_bytes))
-  Until InetGetInfo($download3, 2)
-  InetClose($download3)
-  If FileExists(@ScriptDir&"\virtualbox.exe") Then
-    GUICtrlSetData($Input100, @ScriptDir&"\virtualbox.exe")
-    CheckExeFile(@ScriptDir&"\VirtualBox.exe")
-  EndIf
-  GUICtrlSetData($Input200, @LF & IniRead($Dir_Lang & $lng &".ini", "status", "02", "NotFound"))
-  GUICtrlSetState($Button100, $GUI_ENABLE)
-  GUICtrlSetState($Button200, $GUI_ENABLE)
-  $bytes = 0
-EndFunc
-
 Func DisplayDownloadStatus($downloaded_bytes,$total_bytes)
 	if $total_bytes > 0 Then
 		Return RoundForceDecimalMB($downloaded_bytes)& "MB / "&RoundForceDecimalMB($total_bytes)&"MB ("&Round(100*$downloaded_bytes/$total_bytes)&"%)"
