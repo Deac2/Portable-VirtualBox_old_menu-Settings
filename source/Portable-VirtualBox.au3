@@ -34,12 +34,12 @@ TraySetClick(16)
 TraySetState()
 TraySetToolTip("Portable-VirtualBox")
 
-Global $version = "6.4.9.1"
 Global $var1 = @ScriptDir&"\data\settings\settings.ini"
 Global $var2 = @ScriptDir&"\data\settings\vboxinstall.ini"
 Global $pwd = @ScriptDir
 Global $DefaultUserHome = @ScriptDir&"\.VirtualBox"
 Global $32Bit_Last = "6.0.24"
+Global $version = "6.4.9.1"
 
 Global $new1 = 0, $new2 = 0, $Settings = 0, $iSort, $lng
 ; Window Extended Styles
@@ -79,8 +79,13 @@ EmptyIniWrite($var1, "userhome", "sort", "1")
 EmptyIniWrite($var1, "startvm", "key", "")
 EmptyIniWrite($var1, "lang", "key", "0")
 
-EmptyIniWrite($var2, "download", "key1", "https://download.virtualbox.org/virtualbox/7.0.26/VirtualBox-7.0.26-168464-Win.exe")
-EmptyIniWrite($var2, "download", "key2", "https://download.virtualbox.org/virtualbox/7.0.26/Oracle_VM_VirtualBox_Extension_Pack-7.0.26.vbox-extpack")
+Local $url = SearchVirtualBoxUrl()
+If Not @Error Then
+Local $key1 = $url[1]
+Local $key2 = $url[2]
+EmptyIniWrite($var2, "download", "key1", $key1)
+EmptyIniWrite($var2, "download", "key2", $key2)
+EndIf
 
 #cs
 If NOT FileExists(@ScriptDir&"\data\tools") Then DirCreate(@ScriptDir&"\data\tools")
@@ -826,6 +831,117 @@ EndFunc
 
 Func HideWindows()
 _WinSetState("VirtualBox.exe", @SW_HIDE)
+EndFunc
+
+Func SearchVirtualBoxUrl($version = "")
+    Const $TH_MAJOR = 6, $TH_MINOR = 0, $TH_PATCH = 24
+	Local $defaultExeUrl = "https://download.virtualbox.org/virtualbox/7.0.26/VirtualBox-7.0.26-168464-Win.exe"
+    Local $defaultExtpackUrl = "https://download.virtualbox.org/virtualbox/7.0.26/Oracle_VM_VirtualBox_Extension_Pack-7.0.26-168464.vbox-extpack"
+    Local $links[3]
+    $links[1] = ""
+    $links[2] = ""
+
+    If StringLen($version) > 0 And StringRegExp($version, "^[0-9.xX]+$") = 0 Then
+		$links[1] = $defaultExeUrl
+		$links[2] = $defaultExtpackUrl
+		Return $links
+    EndIf
+
+    Local $Url = "https://download.virtualbox.org/virtualbox/"
+    Local $binData = InetRead($Url)
+    If @error Or @extended = 0 Then
+		$links[1] = $defaultExeUrl
+		$links[2] = $defaultExtpackUrl
+		Return $links
+    EndIf
+
+    Local $html = BinaryToString($binData, 4)
+    Local $aMatches = StringRegExp($html, '<a href="([\d\.]+/)">', 3)
+    If @error Or UBound($aMatches) = 0 Then
+		$links[1] = $defaultExeUrl
+		$links[2] = $defaultExtpackUrl
+		Return $links
+    EndIf
+
+    Local $maxMaj = 9, $maxMin = 0
+    Local $maxPatch = -1
+    Local $maxNodeVer = ""
+
+    For $i = 0 To UBound($aMatches) - 1
+        Local $ver = StringTrimRight($aMatches[$i], 1)
+        Local $aP = StringSplit($ver, ".")
+		If $aP[0] <> 3 Then ContinueLoop
+
+        Local $maj = Number($aP[1])
+        Local $min = Number($aP[2])
+        Local $pat = Number($aP[3])
+
+        If VersionCompare($maj, $min, $pat, $TH_MAJOR, $TH_MINOR, $TH_PATCH) Then
+			If StringLen($version) > 0 And $version>$ver Then
+				$maxNodeVer = $ver
+            EndIf
+            If $version = "" And $maj >= $maxMaj And $min >= $maxMin Then
+                If $pat > $maxPatch Then
+                    $maxPatch = $pat
+                    $maxNodeVer = $ver
+                EndIf
+            EndIf
+        EndIf
+    Next
+
+    If $maxNodeVer = "" Then
+		$links[1] = $defaultExeUrl
+		$links[2] = $defaultExtpackUrl
+		Return $links
+    EndIf
+
+    Local $baseUrl = "https://download.virtualbox.org/virtualbox/"&$maxNodeVer&"/"
+    Local $htmlContent = InetRead($baseUrl)
+    If @error Or @extended = 0 Then
+		$links[1] = $defaultExeUrl
+		$links[2] = $defaultExtpackUrl
+		Return $links
+    EndIf
+
+    Local $patterns[2] = [ _
+        '<a\s+[^>]*href=["' & '](.+?\.vbox-extpack)["' & ']', _
+        '<a\s+[^>]*href=["' & '](.+?\.exe)["' & ']' _
+    ]
+
+	$htmlContent = BinaryToString($htmlContent)
+    For $pattern In $patterns
+        Local $matches = StringRegExp($htmlContent, $pattern, 1)
+        If IsArray($matches) Then
+            For $i = 0 To UBound($matches) - 1
+                Local $Url = $matches[$i]
+                If StringLeft($Url, 4) <> "http" Then
+                If StringLeft($Url, 1) = "/" Then
+                    $Url = StringRegExpReplace($Url, '^/', '')
+                EndIf
+                    $Url = $baseUrl & $Url
+                EndIf
+
+                If StringRegExp($pattern, ".exe") Then
+                    $links[1] = $Url
+                ElseIf StringRegExp($pattern, ".vbox-extpack") Then
+                    $links[2] = $Url
+                EndIf
+            Next
+        EndIf
+    Next
+
+    If $links[1] = "" Then $links[1] = $defaultExeUrl
+    If $links[2] = "" Then $links[2] = $defaultExtpackUrl
+    Return $links
+EndFunc
+
+Func VersionCompare($maj, $min, $pat, $tMaj, $tMin, $tPat)
+    If $maj > $tMaj Then Return True
+    If $maj < $tMaj Then Return False
+    If $min > $tMin Then Return True
+    If $min < $tMin Then Return False
+    If $pat >= $tPat Then Return True
+    Return False
 EndFunc
 
 Func _LogDuplicate($Linetext)
@@ -1614,6 +1730,67 @@ Func ProcessNameClose($ProcessName)
 EndFunc
 
 Func DownloadFile()
+	GUICtrlSetState($Button100, $GUI_DISABLE)
+	GUICtrlSetState($Button200, $GUI_DISABLE)
+	Local $download1 = IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key1", "NotFound")
+	Local $download2 = IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key2", "NotFound")
+	Local $downloaded1 = False
+	Local $downloaded2 = False
+	Local $retryCount = 0
+	Local $maxRetries = 3
+	Do
+		Local $info = InetGet(IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key2", "NotFound"), @ScriptDir&"\Extension", 8, 1)
+		If @error Then
+			ExitLoop
+		EndIf
+
+		While InetGetInfo($info, 3) = 0
+			Local $bytes = InetGetInfo($info, 0)
+			Local $total_bytes = InetGetInfo($info, 1)
+			GUICtrlSetData($Input200, IniRead($Dir_Lang & $lng &".ini", "status", "01", "NotFound") &" "& $download1 & @LF & DisplayDownloadStatus($bytes,$total_bytes) )
+			Sleep(250)
+		WEnd
+
+		Local $status = InetGetInfo($info, 3)
+		If $status = 1 Then
+			$downloaded1 = True
+		Else
+			$retryCount += 1
+			Sleep(3000)
+		EndIf
+	Until $downloaded1 Or $retryCount >= $maxRetries
+
+	Do
+		Local $info = InetGet(IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key1", "NotFound"), @ScriptDir&"\VirtualBox.exe", 8, 1)
+		If @error Then
+			ExitLoop
+		EndIf
+
+		While InetGetInfo($info, 3) = 0
+			Local $bytes = InetGetInfo($info, 0)
+			Local $total_bytes = InetGetInfo($info, 1)
+			GUICtrlSetData($Input200, IniRead($Dir_Lang & $lng &".ini", "status", "01", "NotFound") &" "& $download2 & @LF & DisplayDownloadStatus($bytes,$total_bytes) )
+			Sleep(250)
+		WEnd
+		
+		Local $status = InetGetInfo($info, 3)
+		If $status = 1 Then
+			$downloaded2 = True
+		Else
+			$retryCount += 1
+			Sleep(3000)
+		EndIf
+	Until $downloaded2 Or $retryCount >= $maxRetries
+    If FileExists(@ScriptDir&"\VirtualBox.exe") Then
+        GUICtrlSetData($Input100, @ScriptDir&"\VirtualBox.exe")
+        CheckExeFile(@ScriptDir&"\VirtualBox.exe") ; Ваша функция для проверки файла
+    EndIf
+	GUICtrlSetData($Input200, IniRead($Dir_Lang & $lng &".ini", "status", "02", "NotFound"))
+	GUICtrlSetState($Button100, $GUI_ENABLE)
+	GUICtrlSetState($Button200, $GUI_ENABLE)
+EndFunc
+
+Func DownloadFile22()
   GUICtrlSetState($Button100, $GUI_DISABLE)
   GUICtrlSetState($Button200, $GUI_DISABLE)
   Local $download1 = InetGet(IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key1", "NotFound"), $pwd&"\VirtualBox.exe", 8, 1)
