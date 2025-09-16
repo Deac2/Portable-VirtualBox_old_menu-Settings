@@ -1841,32 +1841,38 @@ Func UseSettings()
     GUICtrlSetData($Input200, @LF & IniRead($Dir_Lang & $lng &".ini", "status", "04", "NotFound"))
     If FileExists(@ScriptDir&"\virtualbox.exe") Then
       Run(@ScriptDir&"\virtualbox.exe -x -p temp", @ScriptDir, @SW_HIDE)
-      Opt("WinTitleMatchMode", 2)
-      WinWait("VirtualBox Installer", "")
+      Opt ("WinTitleMatchMode", 2)
+	  WinWait("VirtualBox Installer")
+      While WinExists("VirtualBox Installer")
+      WinActivate("VirtualBox Installer")
       ControlClick("VirtualBox Installer", "OK", "TButton1")
-      WinClose("VirtualBox Installer", "")
+      WinClose("VirtualBox Installer")
+      WEnd
     EndIf
 
     If FileExists($SourceFile) Then
       Run($SourceFile&" -x -p temp", @ScriptDir, @SW_HIDE)
-      Opt("WinTitleMatchMode", 2)
-      WinWait("VirtualBox Installer", "")
+      Opt ("WinTitleMatchMode", 2)
+	  WinWait("VirtualBox Installer")
+      While WinExists("VirtualBox Installer")
+      WinActivate("VirtualBox Installer")
       ControlClick("VirtualBox Installer", "OK", "TButton1")
-      WinClose("VirtualBox Installer", "")
+      WinClose("VirtualBox Installer")
+      WEnd
     EndIf
   EndIf
 
-	Local $Patch = ""
+	Local $PatchExtension = ""
 	$aArray = _RecFileListToArray($SourceDir, "*Extension*", 1, 1, 0, 2)
 	If IsArray($aArray) Then
       For $i = 1 To $aArray[0]
       $PatchExtension = $aArray[$i]
       Next
 	Endif
-    If FileExists($PatchExtension) Then
-      RunWait('"'&@ScriptDir&'\data\tools\7za.exe"'&" x -o"&'"'&@ScriptDir&'\temp\"'&" "&'"'&$PatchExtension&'"', @ScriptDir, @SW_HIDE)
-      RunWait('"'&@ScriptDir&'\data\tools\7za.exe"'&" x -o"&'"'&@ScriptDir&'\temp\ExtensionPacks\Oracle_VM_VirtualBox_Extension_Pack\"'&" "&'"'&@ScriptDir&'\temp\Extension~"', @ScriptDir, @SW_HIDE)
-    EndIf
+	If FileExists($PatchExtension) Then
+	  RunWait(@ScriptDir&"\data\tools\7za.exe x -o"&@ScriptDir&"\temp\ "&$PatchExtension&"", @ScriptDir, @SW_HIDE)
+	  RunWait(@ScriptDir&"\data\tools\7za.exe x -o"&@ScriptDir&"\temp\ExtensionPacks\Oracle_VM_VirtualBox_Extension_Pack\ "&@ScriptDir&"\temp\Extension~", @ScriptDir, @SW_HIDE)
+	Endif
 
   If GUICtrlRead($Checkbox100) = $GUI_CHECKED AND FileExists(@ScriptDir&"\temp") Then
     GUICtrlSetData($Input200, @LF & IniRead($Dir_Lang & $lng &".ini", "status", "05", "NotFound"))
@@ -1891,8 +1897,22 @@ Func UseSettings()
 
   If GUICtrlRead($Checkbox110) = $GUI_CHECKED AND FileExists(@ScriptDir&"\temp") Then
     GUICtrlSetData($Input200, @LF & IniRead($Dir_Lang & $lng &".ini", "status", "05", "NotFound"))
-    RunWait("cmd /c ren ""%CD%\temp\*.msi"" amd64.msi", @ScriptDir, @SW_HIDE)
+	Local $msiFiles = _RecFileListToArray(@ScriptDir&"\temp\", "*.msi", 1, 1, 0, 0)
+	If @error Or $msiFiles[0] = 0 Then
+    Exit
+	EndIf
+	If $msiFiles[0] = 1 Then
+    RunWait("cmd /c ren ""%CD%\temp\"&$msiFiles[1]&""" amd64.msi", @ScriptDir, @SW_HIDE)
     RunWait("cmd /c msiexec.exe /quiet /a ""%CD%\temp\amd64.msi"" TARGETDIR=""%CD%\temp\x64""", @ScriptDir, @SW_HIDE)
+	Else
+	For $i = 1 To $msiFiles[0]
+		If StringInStr($msiFiles[$i], "amd64") > 0 Then
+		RunWait("cmd /c ren ""%CD%\temp\"&$msiFiles[$i]&""" amd64.msi", @ScriptDir, @SW_HIDE)
+		RunWait("cmd /c msiexec.exe /quiet /a ""%CD%\temp\amd64.msi"" TARGETDIR=""%CD%\temp\x64""", @ScriptDir, @SW_HIDE)
+		ExitLoop
+		EndIf
+    Next
+    EndIf
     DirCopy(@ScriptDir&"\temp\x64\PFiles\Oracle\VirtualBox", @ScriptDir&"\app64", 1)
     FileCopy(@ScriptDir&"\temp\x64\PFiles\Oracle\VirtualBox\*", @ScriptDir&"\app64", 9)
     DirRemove(@ScriptDir&"\temp\ExtensionPacks\Oracle_VM_VirtualBox_Extension_Pack\darwin.amd64", 1)
