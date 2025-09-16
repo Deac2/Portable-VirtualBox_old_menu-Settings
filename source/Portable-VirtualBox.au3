@@ -1730,81 +1730,80 @@ Func ProcessNameClose($ProcessName)
 EndFunc
 
 Func DownloadFile()
-	GUICtrlSetState($Button100, $GUI_DISABLE)
-	GUICtrlSetState($Button200, $GUI_DISABLE)
-	Local $download1 = IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key1", "NotFound")
-	Local $download2 = IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key2", "NotFound")
-	Local $downloaded1 = False
-	Local $downloaded2 = False
-	Local $retryCount = 0
-	Local $maxRetries = 3
-	Do
-		Local $info = InetGet(IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key2", "NotFound"), @ScriptDir&"\Extension", 8, 1)
-		If @error Then
-			ExitLoop
-		EndIf
+    GUICtrlSetState($Button100, $GUI_DISABLE)
+    GUICtrlSetState($Button200, $GUI_DISABLE)
+    Local $maxRetries = 3
 
-		While InetGetInfo($info, 3) = 0
-			Local $bytes = InetGetInfo($info, 0)
-			Local $total_bytes = InetGetInfo($info, 1)
-			GUICtrlSetData($Input200, IniRead($Dir_Lang & $lng &".ini", "status", "01", "NotFound") &" "& $download1 & @LF & DisplayDownloadStatus($bytes,$total_bytes) )
-			Sleep(250)
-		WEnd
+    Local $url1 = IniRead(@ScriptDir & "\data\settings\vboxinstall.ini", "download", "key1", "NotFound")
+    Local $save1 = @ScriptDir & "\VirtualBox.exe"
+    Local $downloaded1 = False
+    Local $retryCount1 = 0
 
-		Local $status = InetGetInfo($info, 3)
-		If $status = 1 Then
-			$downloaded1 = True
-		Else
-			$retryCount += 1
-			Sleep(3000)
-		EndIf
-	Until $downloaded1 Or $retryCount >= $maxRetries
+    Local $info1 = InetGet($url1, $save1, 8, 1)
+    Do
+        Sleep(50)
+        Local $bytes = InetGetInfo($info1, 0)
+        Local $total_bytes = InetGetInfo($info1, 1)
+        Local $status = InetGetInfo($info1, 3)
+        GUICtrlSetData($Input200, IniRead($Dir_Lang & $lng & ".ini", "status", "01", "NotFound")&" "&$save1& @LF &DisplayDownloadStatus($bytes, $total_bytes))
+        If $status = 1 Then
+            $downloaded1 = True
+        ElseIf $status = 2 Or $status = 3 Then
+            $retryCount1 += 1
+            Sleep(3000)
+            If $retryCount1 < $maxRetries Then
+                InetClose($info1)
+                $info1 = InetGet($url1, $save1, 8, 1)
+            EndIf
+        EndIf
+    Until $downloaded1 Or $retryCount1 >= $maxRetries
 
-	Do
-		Local $info = InetGet(IniRead(@ScriptDir&"\data\settings\vboxinstall.ini", "download", "key1", "NotFound"), @ScriptDir&"\VirtualBox.exe", 8, 1)
-		If @error Then
-			ExitLoop
-		EndIf
-
-		While InetGetInfo($info, 3) = 0
-			Local $bytes = InetGetInfo($info, 0)
-			Local $total_bytes = InetGetInfo($info, 1)
-			GUICtrlSetData($Input200, IniRead($Dir_Lang & $lng &".ini", "status", "01", "NotFound") &" "& $download2 & @LF & DisplayDownloadStatus($bytes,$total_bytes) )
-			Sleep(250)
-		WEnd
-		
-		Local $status = InetGetInfo($info, 3)
-		If $status = 1 Then
-			$downloaded2 = True
-		Else
-			$retryCount += 1
-			Sleep(3000)
-		EndIf
-	Until $downloaded2 Or $retryCount >= $maxRetries
-    If FileExists(@ScriptDir&"\VirtualBox.exe") Then
-        GUICtrlSetData($Input100, @ScriptDir&"\VirtualBox.exe")
-        CheckExeFile(@ScriptDir&"\VirtualBox.exe") ; Ваша функция для проверки файла
+    Local $url2 = IniRead(@ScriptDir & "\data\settings\vboxinstall.ini", "download", "key2", "NotFound")
+    Local $save2 = @ScriptDir & "\Extension"
+    Local $downloaded2 = False
+    Local $retryCount2 = 0
+    Local $info2 = InetGet($url2, $save2, 8, 1)
+    Do
+        Sleep(150)
+        Local $bytes = InetGetInfo($info2, 0)
+        Local $total_bytes = InetGetInfo($info2, 1)
+        Local $status = InetGetInfo($info2, 3)
+        GUICtrlSetData($Input200, IniRead($Dir_Lang & $lng & ".ini", "status", "01", "NotFound")&" "&$save2& @LF & DisplayDownloadStatus($bytes, $total_bytes))
+        If $status = 1 Then
+            $downloaded2 = True
+        ElseIf $status = 2 Or $status = 3 Then
+            $retryCount2 += 1
+            Sleep(3000)
+            If $retryCount2 < $maxRetries Then
+                InetClose($info2)
+                $info2 = InetGet($url2, $save2, 8, 1)
+            EndIf
+        EndIf
+    Until $downloaded2 Or $retryCount2 >= $maxRetries
+    If FileExists($save1) Then
+        GUICtrlSetData($Input100, $save1)
+        CheckExeFile($save1)
     EndIf
-	GUICtrlSetData($Input200, IniRead($Dir_Lang & $lng &".ini", "status", "02", "NotFound"))
-	GUICtrlSetState($Button100, $GUI_ENABLE)
-	GUICtrlSetState($Button200, $GUI_ENABLE)
+    GUICtrlSetData($Input200, IniRead($Dir_Lang & $lng & ".ini", "status", "02", "NotFound"))
+    GUICtrlSetState($Button100, $GUI_ENABLE)
+    GUICtrlSetState($Button200, $GUI_ENABLE)
 EndFunc
 
-Func DisplayDownloadStatus($downloaded_bytes,$total_bytes)
-	if $total_bytes > 0 Then
-		Return RoundForceDecimalMB($downloaded_bytes)& "MB / "&RoundForceDecimalMB($total_bytes)&"MB ("&Round(100*$downloaded_bytes/$total_bytes)&"%)"
-	Else
-		Return RoundForceDecimalMB($downloaded_bytes)& "MB"
-	EndIf
+Func DisplayDownloadStatus($downloaded_bytes, $total_bytes)
+    If $total_bytes > 0 Then
+        Return RoundForceDecimalMB($downloaded_bytes) & "MB / " & RoundForceDecimalMB($total_bytes) & "MB (" & Round(100 * $downloaded_bytes / $total_bytes, 1) & "%)"
+    Else
+        Return RoundForceDecimalMB($downloaded_bytes) & "MB"
+    EndIf
 EndFunc
 
 Func RoundForceDecimalMB($number)
-	$rounded = Round($number/1048576, 1)
-	If NOT StringInStr($rounded, ".") Then
-		Return $rounded & ".0"
-	Else
-		Return $rounded
-	EndIf
+    Local $rounded = Round($number / 1048576, 1)
+    If Not StringInStr($rounded, ".") Then
+        Return $rounded & ".0"
+    Else
+        Return $rounded
+    EndIf
 EndFunc   ;==>RoundForceDecimal
 
 Func DownloadGithub($File, $Save)
