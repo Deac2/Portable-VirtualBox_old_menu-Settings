@@ -155,7 +155,7 @@ If NOT (FileExists(@ScriptDir&"\app32\VirtualBox.exe") OR FileExists(@ScriptDir&
         Local $ctrl5, $ctrl6
         Local $alt5, $alt6
         Local $shift5, $shift6
-        Local $plus11, $plus12, $plus17, $plus18
+        Local $plus05, $plus06, $plus11, $plus12, $plus17, $plus18
 
         If IniRead($var1, "hotkeys", "05", "NotFound") = "^" Then
           $ctrl5  = "CTRL"
