@@ -1028,16 +1028,39 @@ Func ValidatePath($Path, $DefaultPath)
 EndFunc
 
 Func EmptyIniWrite($filename, $section, $key, $value, $encoding = 256)
-    If BitOR($encoding, 16, 32, 64, 128, 256, 512) <> Number(16+32+64+128+256+512) Then
-        $encoding = 256
-    EndIf
+	Switch $encoding
+	Case 16, 32, 64, 128, 256, 512
+    Case Else
+	$encoding = 256
+	EndSwitch
+
 	If NOT IniRead($filename, $section, $key, "") Then
 		$sDir = StringRegExpReplace($filename, "[^\\]+$", "")
 		If NOT FileExists($sDir) Then DirCreate($sDir)
-		FileOpen($filename, 1 + $encoding)
-		FileClose($filename)
-		IniWrite($filename, $section, $key, $value)
-	EndIf
+
+        Local $hFile = FileOpen($filename, 1 + $encoding)
+        If $hFile <> -1 Then FileClose($hFile)
+
+        $hFile = FileOpen($filename, 0 + $encoding)
+        Local $content = ""
+        If $hFile <> -1 Then
+		$content = FileRead($hFile)
+		FileClose($hFile)
+        EndIf
+
+        If StringLeft($content, 2) = @CRLF Then
+		$content = StringMid($content, 3)
+        ElseIf StringLeft($content, 1) = @LF Then
+		$content = StringMid($content, 2)
+        EndIf
+
+        $hFile = FileOpen($filename, 2 + $encoding)
+        If $hFile <> -1 Then
+		FileWrite($hFile, $content)
+		FileClose($hFile)
+        EndIf
+        IniWrite($filename, $section, $key, $value)
+    EndIf
 EndFunc
 
 Func CheckExeFile($Directory)
