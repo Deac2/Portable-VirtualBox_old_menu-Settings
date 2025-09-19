@@ -362,6 +362,29 @@ If (FileExists(@ScriptDir&"\app32\virtualbox.exe") OR FileExists(@ScriptDir&"\ap
       Next
 
       FileClose($file)
+      #clear log
+      If FileExists($UserHome) Then
+      FileDelete($UserHome&"\*.log")
+      FileDelete($UserHome&"\*.log.*")
+      EndIf
+
+      #clear log Machines
+      If FileExists($UserHome&"\VirtualBox.xml") Then
+		For $i = 0 To UBound($values1) - 1
+		Local $Result = StringSplit(StringReplace($values1[$i], ".vbox", ""), "\")
+		Local $ResultName = $Result[$Result[0]]
+		$aArray = _RecFileListToArray($UserHome, "*"&$ResultName&".vbox", 1, 1, 0, 2)
+		If IsArray($aArray) Then
+		For $j = 1 To $aArray[0]
+		If FileExists($aArray[$j]) Then
+		Local $Patch = StringRegExpReplace($aArray[$j], "[^\\]+$", "")
+		FileDelete($Patch&"Logs\*.log")
+		FileDelete($Patch&"Logs\*.log.*")
+		EndIf
+		Next
+		EndIf
+		Next
+      EndIf
     EndIf
   Else
     MsgBox(0+262144, IniRead($Dir_Lang & $lng &".ini", "download", "15", "NotFound"), IniRead($Dir_Lang & $lng &".ini", "download", "16", "NotFound"))
@@ -629,30 +652,6 @@ EndIf
 	  RunWait(@SystemDir&"\regsvr32.exe /S "&$arch&"\VBoxProxyStub.dll", @ScriptDir, @SW_HIDE)
 	  RunWait(@SystemDir&"\regsvr32.exe /S "&$arch&"\VBoxC.dll", @ScriptDir, @SW_HIDE)
       DllCall($arch&"\VBoxRT.dll", "hwnd", "RTR3Init")
-
-      #clear log
-      If FileExists($UserHome) Then
-      FileDelete($UserHome&"\*.log")
-      FileDelete($UserHome&"\*.log.*")
-      EndIf
-
-      #clear log Machines
-      If FileExists($UserHome&"\VirtualBox.xml") Then
-		For $i = 0 To UBound($values1) - 1
-		Local $Result = StringSplit(StringReplace($values1[$i], ".vbox", ""), "\")
-		Local $ResultName = $Result[$Result[0]]
-		$aArray = _RecFileListToArray($UserHome, "*"&$ResultName&".vbox", 1, 1, 0, 2)
-		If IsArray($aArray) Then
-		For $j = 1 To $aArray[0]
-		If FileExists($aArray[$j]) Then
-		Local $Patch = StringRegExpReplace($aArray[$j], "[^\\]+$", "")
-		FileDelete($Patch&"Logs\*.log")
-		FileDelete($Patch&"Logs\*.log.*")
-		EndIf
-		Next
-		EndIf
-		Next
-      EndIf
 
       If $CmdLine[0] = 1 Then
         If FileExists($UserHome) Then
